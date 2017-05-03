@@ -17,30 +17,42 @@ const int REF_LENGTH = 10;
 
 int GetReferenceSize();
 //Gets page number range
+
 int GetFrameNumber();
 //Get number of page frames.
+
 void Generate(const int refSize, std::vector<int> & reference);
 //Generates random reference string.
+
 void InitializeFIFO(std::deque<int> & mem, const int frameNum);
-//Initializes memory pages.
+//Initializes memory pages for FIFO.
+
 void InitializeLRU(std::vector<int> & mem, int frameNum);
-//
+//Initializes memory pages for LRU.
+
 void PrintReferenceString(const std::vector<int> reference);
-//
+//Prints Reference string.
+
 int FIFO(std::deque<int> & mem, int frameNum, std::vector<int> reference);
-//First in first out algorithm.
+//Applies First in first out algorithm and returns number of page faults.
+
 int LRU(std::vector<int> & mem, int frameNum, std::vector<int> reference);
-//Least recently used.
+//Applies least recently used algorithm and returns number of page faults.
+
 int FIFOInsert(std::deque<int> & mem, int page, int frameNum);
-//
+//Inserts page into page frame using FIFO.
+
 int LRUInsert(std::vector<int> & mem, int page, int frameNum);
-//
+//Inserts page into page frame using LRU.
+
 bool FIFOSearch(std::deque<int> & mem, int page);
-//
+//Returns whether or not page is currently in the FIFO page frame.
+
 int LRUSearch(std::vector<int> & mem, int page);
-//
+//Returns index of page from LRU page frame if present, -1 otherwise.
+
 void LRUupdate(std::vector<int> & mem, int index);
-//
+//Moves most recently used page to the end of the page frame,
 
 //********************************** Main *************************************
 
@@ -53,19 +65,20 @@ int main()
     std::vector<int> reference;
     //Sequence of pages.
     std::deque<int> fifo_mem;
-    //Page frame.
+    //Page frame for FIFO.
     std::vector<int> lru_mem;
-
+    //Page frame for LRU.
+    
     refSize = GetReferenceSize();
     frameNum =  GetFrameNumber();
     
     //Perform FIFO.
     Generate(refSize, reference);
     InitializeFIFO(fifo_mem,frameNum);
-
     cout << "Page fault of FIFO: " << FIFO(fifo_mem,frameNum,reference) << endl;
     cout << endl;
     
+    //Print reference string one more time.
     PrintReferenceString(reference);
     
     //Perform LRU.
@@ -117,7 +130,6 @@ void Generate(int refSize, std::vector<int> & reference)
 
     return;
 }
-
 
 void PrintReferenceString(const std::vector<int> reference)
 {
@@ -173,7 +185,6 @@ int FIFO(std::deque<int> & mem, int frameNum, std::vector<int> reference)
 
 int FIFOInsert(std::deque<int> & mem, int page, int frameNum)
 {
-    //cout << "ENTERED INSERT" << endl;
     int pageFault = 0;
     if(FIFOSearch(mem,page) == false)
     {
@@ -187,7 +198,6 @@ int FIFOInsert(std::deque<int> & mem, int page, int frameNum)
 
 bool FIFOSearch(std::deque<int> & mem, int page)
 {
-    //cout << "ENTERED SEARCH" << endl;
     bool found = false;
     for(int i; i < mem.size(); i++)
     {
@@ -234,7 +244,6 @@ int LRU(std::vector<int> & mem, int frameNum, std::vector<int> reference)
     return faultCount;
 }
 
-
 int LRUInsert(std::vector<int> & mem, int page, int frameNum)
 {
     int pageFault = 0;
@@ -253,10 +262,8 @@ int LRUInsert(std::vector<int> & mem, int page, int frameNum)
     return pageFault;
 }
 
-
 int LRUSearch(std::vector<int> & mem, int page)
 {
-    //cout << "ENTERED SEARCH" << endl;
     int index = -1;
     for(int i = 0; i < mem.size(); i++)
     {
@@ -271,7 +278,8 @@ int LRUSearch(std::vector<int> & mem, int page)
 
 void LRUupdate(std::vector<int> & mem, int index)
 {
-    if (index == mem.size() - 1) {
+    if (index == mem.size() - 1) 
+    {
             return;
     }
     int cur = mem[index]; 
