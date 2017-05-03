@@ -8,6 +8,7 @@
 #include <iostream>
 #include <vector>
 #include <deque>
+#include <map>
 
 using namespace std;
 
@@ -20,23 +21,25 @@ int GetFrameNumber();
 //Get number of page frames.
 void Generate(const int refSize, std::vector<int> & reference);
 //Generates random reference string.
-void Initialize(std::deque<int> & mem, const int frameNum);
+void InitializeFIFO(std::deque<int> & mem, const int frameNum);
 //Initializes memory pages.
+void InitializeLRU(std::vector<int> & mem, int frameNum);
+//
 void PrintReferenceString(const std::vector<int> reference);
 //
 int FIFO(std::deque<int> & mem, int frameNum, std::vector<int> reference);
 //First in first out algorithm.
-//int LRU(PageFrame mem, int frameNum, std::vector<int> reference);
+int LRU(std::vector<int> & mem, int frameNum, std::vector<int> reference);
 //Least recently used.
 int FIFOInsert(std::deque<int> & mem, int page, int frameNum);
 //
-//int LRUInsert(int Page);
+int LRUInsert(std::vector<int> & mem, int page, int frameNum);
 //
-bool FIFOSearch(std::deque<int> & mem, int page, int frameNum);
+bool FIFOSearch(std::deque<int> & mem, int page);
 //
-//bool LRUSearch(int page);
+int LRUSearch(std::vector<int> & mem, int page);
 //
-//void LRUupdate(int index);
+void LRUupdate(std::vector<int> & mem, int index);
 //
 
 //********************************** Main *************************************
@@ -51,21 +54,24 @@ int main()
     //Sequence of pages.
     std::deque<int> fifo_mem;
     //Page frame.
+    std::vector<int> lru_mem;
 
     refSize = GetReferenceSize();
     frameNum =  GetFrameNumber();
     
-    //FIFO.
+    //Perform FIFO.
     Generate(refSize, reference);
-    Initialize(fifo_mem, frameNum);
+    InitializeFIFO(fifo_mem,frameNum);
 
     cout << "Page fault of FIFO: " << FIFO(fifo_mem,frameNum,reference) << endl;
     cout << endl;
     
     PrintReferenceString(reference);
     
-    //LRU.
-    //Initialize(mem, frameNum);
+    //Perform LRU.
+    InitializeLRU(lru_mem,frameNum);
+    cout << "Page fault of LRU: " << LRU(lru_mem,frameNum,reference) << endl;
+    cout << endl;
     
     return 0;
 }
@@ -112,20 +118,10 @@ void Generate(int refSize, std::vector<int> & reference)
     return;
 }
 
-void Initialize(std::deque<int> & mem, int frameNum)
-{
-    for(int i = 0; i < frameNum; i++)
-    {
-        mem.push_back(-1);
-    }
-    
-    return;
-}
 
 void PrintReferenceString(const std::vector<int> reference)
 {
-
-    //cout << "Printing reference string..." << endl;
+    cout << "Printing reference string..." << endl;
     for(int i = 0; i < reference.size(); i++)
     {
         cout << reference[i];
@@ -135,6 +131,17 @@ void PrintReferenceString(const std::vector<int> reference)
         }else{
             cout << ", ";
         }   
+    }
+    cout << endl;
+    
+    return;
+}
+
+void InitializeFIFO(std::deque<int> & mem, int frameNum)
+{
+    for(int i = 0; i < frameNum; i++)
+    {
+        mem.push_back(-1);
     }
     
     return;
@@ -168,7 +175,7 @@ int FIFOInsert(std::deque<int> & mem, int page, int frameNum)
 {
     //cout << "ENTERED INSERT" << endl;
     int pageFault = 0;
-    if(FIFOSearch(mem,page,frameNum) == 0)
+    if(FIFOSearch(mem,page) == false)
     {
         pageFault++;
         mem.pop_front();
@@ -178,7 +185,7 @@ int FIFOInsert(std::deque<int> & mem, int page, int frameNum)
     return pageFault;
 }
 
-bool FIFOSearch(std::deque<int> & mem, int page, int frameNum)
+bool FIFOSearch(std::deque<int> & mem, int page)
 {
     //cout << "ENTERED SEARCH" << endl;
     bool found = false;
@@ -192,45 +199,84 @@ bool FIFOSearch(std::deque<int> & mem, int page, int frameNum)
 
     return found;
 }
-/*
-int LRU(PageFrame mem, int frameNum, std::vector<int> reference)
+
+void InitializeLRU(std::vector<int> & mem, int frameNum)
 {
+    for(int i = 0; i < frameNum; i++)
+    {
+        mem.push_back(-1);
+    }
+    
+    return;
+}
+
+int LRU(std::vector<int> & mem, int frameNum, std::vector<int> reference)
+{
+    cout << "Running LRU algorithm..." << endl;
     int faultCount = 0;
     for(int i = 0; i < REF_LENGTH; i++)
     {
-        faultCount += LRUInsert(reference[i]);
+        faultCount += LRUInsert(mem,reference[i],frameNum);
+        cout << "Frames: "; 
         for(int j = 0; j < frameNum; j++)
         {
-            cout << mem[j] << endl;
+            cout << mem[j];
+            if(j == frameNum-1)
+            {
+                cout << "." << endl;
+            }else{
+                cout << ", ";
+            }  
         }
     }
-    
+    cout << endl;
+
     return faultCount;
 }
 
-int LRUInsert(int page)
+
+int LRUInsert(std::vector<int> & mem, int page, int frameNum)
 {
-    int fault = 0;
+    int pageFault = 0;
     int index = -1;
     
-    index = LRUSearch(page);
-    if (index = -1)
+    index = LRUSearch(mem,page);
+    if (index == -1)
     {
-        
+        mem.erase(mem.begin());
+        mem.push_back(page);
+        pageFault++;
     }else{
-        LRUupdate(index);
+        LRUupdate(mem, index);
     }
     
-    return fault;
+    return pageFault;
 }
 
-int LRUSearch(int page)
+
+int LRUSearch(std::vector<int> & mem, int page)
 {
-    return 0;
+    //cout << "ENTERED SEARCH" << endl;
+    int index = -1;
+    for(int i = 0; i < mem.size(); i++)
+    {
+        if(mem[i] == page)
+        {
+            index = i;
+        }
+    }
+
+    return index;
 }
 
-void LRUupdate(int index)
+void LRUupdate(std::vector<int> & mem, int index)
 {
+    if (index == mem.size() - 1) {
+            return;
+    }
+    int cur = mem[index]; 
+    mem.erase(mem.begin()+index);
+    mem.push_back(cur);
+    
     return;
 }
-*/
